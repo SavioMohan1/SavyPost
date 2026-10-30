@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SavyPost — AI Social Media Manager</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+            },
+            dark: {
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.05); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-dark-950 text-slate-100 min-h-screen flex flex-col antialiased">
+
+  <!-- Top Navigation Bar -->
+  <header class="glass sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between border-b border-slate-800">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-brand-500/20">
+        <i data-lucide="share-2" class="w-5 h-5 text-white"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-300 bg-clip-text text-transparent">SavyPost</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">RuFlo Swarm Active</span>
+        </div>
+        <p class="text-xs text-slate-400">Reverse-Engineered Local Social Media Manager</p>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex items-center gap-1 bg-dark-900/80 p-1.5 rounded-xl border border-slate-800">
+      <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-3.5 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2 text-white bg-slate-800 shadow-sm">
+        <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Overview
+      </button>
+      <button onclick="switchTab('composer')" id="tab-composer" class="tab-btn px-3.5 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white">
+        <i data-lucide="edit-3" class="w-4 h-4"></i> Composer & Studio
+      </button>
+      <button onclick="switchTab('queue')" id="tab-queue" class="tab-btn px-3.5 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white">
+        <i data-lucide="calendar" class="w-4 h-4"></i> Schedule Queue
+      </button>
+      <button onclick="switchTab('accounts')" id="tab-accounts" class="tab-btn px-3.5 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white">
+        <i data-lucide="key" class="w-4 h-4"></i> Accounts & Vault
+      </button>
+      <button onclick="switchTab('chat')" id="tab-chat" class="tab-btn px-3.5 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white">
+        <i data-lucide="bot" class="w-4 h-4"></i> AI Manager Chat
+      </button>
+      <button onclick="switchTab('clips')" id="tab-clips" class="tab-btn px-3.5 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white">
+        <i data-lucide="film" class="w-4 h-4"></i> Content Clips
+      </button>
+    </nav>
+
+    <!-- Quick Actions -->
+    <div class="flex items-center gap-3">
+      <button onclick="switchTab('composer')" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm flex items-center gap-2 shadow-lg shadow-emerald-600/20 transition">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i> Create Post
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 p-6 max-w-7xl w-full mx-auto">
+
+    <!-- 1. DASHBOARD OVERVIEW -->
+    <section id="view-dashboard" class="space-y-6">
+      <!-- Metric Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="glass-card p-5 rounded-2xl">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-sm font-medium">Total Posts</span>
+            <i data-lucide="layers" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div class="text-3xl font-bold" id="stat-total">0</div>
+          <p class="text-xs text-slate-500 mt-1">Across all local channels</p>
+        </div>
+
+        <div class="glass-card p-5 rounded-2xl">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-sm font-medium">Scheduled</span>
+            <i data-lucide="clock" class="w-4 h-4 text-blue-400"></i>
+          </div>
+          <div class="text-3xl font-bold text-blue-400" id="stat-scheduled">0</div>
+          <p class="text-xs text-slate-500 mt-1">Ready in publishing queue</p>
+        </div>
+
+        <div class="glass-card p-5 rounded-2xl">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-sm font-medium">Published</span>
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div class="text-3xl font-bold text-emerald-400" id="stat-published">0</div>
+          <p class="text-xs text-slate-500 mt-1">Live on social networks</p>
+        </div>
+
+        <div class="glass-card p-5 rounded-2xl">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-sm font-medium">Channels Connected</span>
+            <i data-lucide="shield-check" class="w-4 h-4 text-indigo-400"></i>
+          </div>
+          <div class="text-3xl font-bold text-indigo-400" id="stat-accounts">0</div>
+          <p class="text-xs text-slate-500 mt-1">Ready for automated dispatch</p>
+        </div>
+      </div>
+
+      <!-- Quick Action Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="glass p-6 rounded-2xl flex flex-col justify-between">
+          <div>
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-4">
+              <i data-lucide="sparkles" class="w-5 h-5"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-1">AI Social Media Manager</h3>
+            <p class="text-sm text-slate-400 mb-4">Let Antigravity generate viral multi-platform hooks, format threads, and schedule campaigns based on your workspace videos.</p>
+          </div>
+          <button onclick="switchTab('composer')" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-medium text-sm transition flex items-center justify-center gap-2">
+            Draft Campaign <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="glass p-6 rounded-2xl flex flex-col justify-between">
+          <div>
+            <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-4">
+              <i data-lucide="globe" class="w-5 h-5"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-1">Agent-Reach Topic Research</h3>
+            <p class="text-sm text-slate-400 mb-4">Extract native transcripts and viral debate points from YouTube, Reddit, and Twitter without requiring API keys.</p>
+          </div>
+          <button onclick="switchTab('chat')" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-medium text-sm transition flex items-center justify-center gap-2">
+            Open AI Research <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="glass p-6 rounded-2xl flex flex-col justify-between">
+          <div>
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-4">
+              <i data-lucide="video" class="w-5 h-5"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-1">Content Rewards Media</h3>
+            <p class="text-sm text-slate-400 mb-4">Promote your 9:16 vertical shorts, kinetic subtitles, and Remotion video assets directly from local storage.</p>
+          </div>
+          <button onclick="switchTab('clips')" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-medium text-sm transition flex items-center justify-center gap-2">
+            Browse Video Clips <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Recent Posts List -->
+      <div class="glass p-6 rounded-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-lg flex items-center gap-2">
+            <i data-lucide="history" class="w-5 h-5 text-slate-400"></i> Recent Activity & Posts
+          </h3>
+          <button onclick="switchTab('queue')" class="text-sm text-emerald-400 hover:underline">View All</button>
+        </div>
+        <div id="recent-posts-list" class="space-y-3">
+          <div class="text-center py-8 text-slate-500 text-sm">Loading recent posts...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. COMPOSER & CAMPAIGN STUDIO -->
+    <section id="view-composer" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left: Composer Form (7 cols) -->
+        <div class="lg:col-span-7 space-y-6">
+          <div class="glass p-6 rounded-2xl space-y-5">
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold flex items-center gap-2">
+                <i data-lucide="edit" class="w-5 h-5 text-emerald-400"></i> Post Composer
+              </h2>
+              <div class="flex items-center gap-2">
+                <button onclick="openAiGeneratorModal()" class="px-3 py-1.5 rounded-lg bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/30 border border-indigo-500/30 text-xs font-medium flex items-center gap-1.5 transition">
+                  <i data-lucide="wand-2" class="w-3.5 h-3.5"></i> AI Generate
+                </button>
+              </div>
+            </div>
+
+            <!-- Target Platforms Picker -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Publish To Platforms</label>
+              <div class="flex flex-wrap gap-2" id="platform-selectors">
+                <label class="cursor-pointer">
+                  <input type="checkbox" value="x" checked class="hidden peer" onchange="updatePlatformSelection()">
+                  <span class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 bg-slate-800/80 text-slate-300 peer-checked:bg-slate-100 peer-checked:text-black peer-checked:border-white transition flex items-center gap-1.5">
+                    𝕏 Twitter / X
+                  </span>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="checkbox" value="linkedin" checked class="hidden peer" onchange="updatePlatformSelection()">
+                  <span class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 bg-slate-800/80 text-slate-300 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-500 transition flex items-center gap-1.5">
+                    LinkedIn
+                  </span>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="checkbox" value="telegram" checked class="hidden peer" onchange="updatePlatformSelection()">
+                  <span class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 bg-slate-800/80 text-slate-300 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-400 transition flex items-center gap-1.5">
+                    Telegram
+                  </span>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="checkbox" value="bluesky" checked class="hidden peer" onchange="updatePlatformSelection()">
+                  <span class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 bg-slate-800/80 text-slate-300 peer-checked:bg-blue-500 peer-checked:text-white peer-checked:border-blue-400 transition flex items-center gap-1.5">
+                    Bluesky
+                  </span>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="checkbox" value="discord" class="hidden peer" onchange="updatePlatformSelection()">
+                  <span class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 bg-slate-800/80 text-slate-300 peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-500 transition flex items-center gap-1.5">
+                    Discord
+                  </span>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="checkbox" value="reddit" class="hidden peer" onchange="updatePlatformSelection()">
+                  <span class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 bg-slate-800/80 text-slate-300 peer-checked:bg-orange-600 peer-checked:text-white peer-checked:border-orange-500 transition flex items-center gap-1.5">
+                    Reddit
+                  </span>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="checkbox" value="youtube" class="hidden peer" onchange="updatePlatformSelection()">
+                  <span class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 bg-slate-800/80 text-slate-300 peer-checked:bg-red-600 peer-checked:text-white peer-checked:border-red-500 transition flex items-center gap-1.5">
+                    YouTube
+                  </span>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="checkbox" value="instagram" class="hidden peer" onchange="updatePlatformSelection()">
+                  <span class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 bg-slate-800/80 text-slate-300 peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-pink-600 peer-checked:text-white transition flex items-center gap-1.5">
+                    Instagram (Reels)
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Content Area -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Post Message</label>
+                <span id="char-counter" class="text-xs font-mono text-emerald-400">0 / 280 chars</span>
+              </div>
+              <textarea id="post-content" rows="6" oninput="handleContentInput()" placeholder="What do you want to share with your audience?" class="w-full bg-dark-900 border border-slate-700 focus:border-emerald-500 rounded-xl p-4 text-sm text-slate-100 placeholder-slate-500 focus:outline-none transition leading-relaxed"></textarea>
+            </div>
+
+            <!-- Media Attachments -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Media Attachment (Image / Video Clip)</label>
+              <div class="flex items-center gap-3">
+                <input type="text" id="post-media-path" placeholder="Path to local image/video or select from clips" class="flex-1 bg-dark-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none">
+                <button onclick="switchTab('clips')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 transition flex items-center gap-1">
+                  <i data-lucide="folder" class="w-3.5 h-3.5"></i> Pick Clip
+                </button>
+              </div>
+            </div>
+
+            <!-- Schedule Settings -->
+            <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="clock" class="w-4 h-4 text-emerald-400"></i>
+                  <span class="text-sm font-medium">Publishing Schedule</span>
+                </div>
+                <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-400">
+                  <input type="checkbox" id="post-immediately" onchange="toggleScheduleInput()" class="rounded border-slate-700 text-emerald-500 focus:ring-0">
+                  Post Immediately Now
+                </label>
+              </div>
+              <div id="schedule-datetime-container" class="flex items-center gap-3">
+                <input type="datetime-local" id="post-schedule-dt" class="bg-dark-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none">
+                <span class="text-xs text-slate-500">Local background worker will dispatch automatically.</span>
+              </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex items-center gap-3 pt-2">
+              <button onclick="submitPost(false)" class="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
+                <i data-lucide="calendar-check" class="w-4 h-4"></i> Schedule / Save Post
+              </button>
+              <button onclick="submitPost(true)" class="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm transition flex items-center gap-2">
+                <i data-lucide="send" class="w-4 h-4"></i> Post Now
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Multi-Platform Live Previews (5 cols) -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="glass p-5 rounded-2xl">
+            <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-3 flex items-center justify-between">
+              <span>Live Social Preview</span>
+              <span id="preview-platform-label" class="text-xs text-emerald-400 font-mono">𝕏 Twitter</span>
+            </h3>
+
+            <!-- Preview Card -->
+            <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
+                  SM
+                </div>
+                <div>
+                  <div class="text-xs font-semibold flex items-center gap-1">
+                    <span>You</span>
+                    <i data-lucide="badge-check" class="w-3.5 h-3.5 text-blue-400"></i>
+                  </div>
+                  <div class="text-[11px] text-slate-500">@username · Just now</div>
+                </div>
+              </div>
+
+              <!-- Message preview -->
+              <p id="preview-text" class="text-xs text-slate-200 leading-relaxed whitespace-pre-wrap">Type your message in the composer to see how it renders across channels...</p>
+
+              <!-- Media preview box -->
+              <div id="preview-media-box" class="hidden rounded-lg overflow-hidden border border-slate-800 bg-slate-950 p-3 text-center text-xs text-slate-400">
+                <i data-lucide="video" class="w-6 h-6 mx-auto mb-1 text-emerald-400"></i>
+                <span id="preview-media-label">Video Clip Attached</span>
+              </div>
+
+              <div class="flex items-center justify-between pt-2 text-slate-500 text-xs border-t border-slate-800">
+                <span class="flex items-center gap-1"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i> 0</span>
+                <span class="flex items-center gap-1"><i data-lucide="repeat" class="w-3.5 h-3.5"></i> 0</span>
+                <span class="flex items-center gap-1"><i data-lucide="heart" class="w-3.5 h-3.5"></i> 0</span>
+                <span class="flex items-center gap-1"><i data-lucide="share" class="w-3.5 h-3.5"></i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 3. SCHEDULE QUEUE -->
+    <section id="view-queue" class="hidden space-y-6">
+      <div class="glass p-6 rounded-2xl">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-lg font-semibold flex items-center gap-2">
+              <i data-lucide="calendar" class="w-5 h-5 text-blue-400"></i> Scheduled & Published Queue
+            </h2>
+            <p class="text-xs text-slate-400">All automated jobs dispatched by the background worker.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="loadPosts()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 transition flex items-center gap-1.5">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="text-slate-400 uppercase tracking-wider border-b border-slate-800">
+              <tr>
+                <th class="py-3 px-4">Content</th>
+                <th class="py-3 px-4">Platforms</th>
+                <th class="py-3 px-4">Scheduled Date</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="posts-table-body" class="divide-y divide-slate-800/60">
+              <tr><td colspan="5" class="py-8 text-center text-slate-500">Loading queue...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. ACCOUNTS & VAULT -->
+    <section id="view-accounts" class="hidden space-y-6">
+      <div class="glass p-6 rounded-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-lg font-semibold flex items-center gap-2">
+              <i data-lucide="key" class="w-5 h-5 text-indigo-400"></i> Connected Channels & Social Accounts
+            </h2>
+            <p class="text-xs text-slate-400">Credentials are stored locally and encrypted in your SQLite vault.</p>
+          </div>
+          <button onclick="openAddAccountModal()" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center gap-1.5 transition">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Channel
+          </button>
+        </div>
+
+        <!-- Simulation Mode Banner -->
+        <div class="p-4 rounded-xl bg-slate-900/80 border border-emerald-500/20 flex items-start gap-3 mb-6">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+            <i data-lucide="info" class="w-4 h-4"></i>
+          </div>
+          <div class="text-xs text-slate-300 leading-relaxed">
+            <span class="font-semibold text-emerald-400">Simulation Mode vs. Live Channels:</span> Default testing accounts operate in zero-risk <b>Simulation Mode</b> so you can test post creation, multi-platform formatting, and the background scheduler locally without needing real API keys. To connect real channels (e.g. your actual Telegram group, Discord server, or Twitter account), click <b>Configure</b> on any card and enter your tokens.
+          </div>
+        </div>
+
+        <!-- Accounts Grid -->
+        <div id="accounts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Quick Connect Instructions -->
+        <div class="mt-8 pt-6 border-t border-slate-800">
+          <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Quick Channel Setup Guide</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5">
+              <div class="font-semibold text-sky-400 flex items-center gap-1.5">
+                <i data-lucide="send" class="w-3.5 h-3.5"></i> Telegram (1 Min Setup)
+              </div>
+              <p class="text-slate-400 text-[11px] leading-relaxed">
+                1. Message <b>@BotFather</b> on Telegram & send <code>/newbot</code>.<br>
+                2. Copy HTTP API Token.<br>
+                3. Add bot as Admin to your channel, and set Chat ID to <code>@channelname</code>.
+              </p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5">
+              <div class="font-semibold text-indigo-400 flex items-center gap-1.5">
+                <i data-lucide="hash" class="w-3.5 h-3.5"></i> Discord (30 Sec Setup)
+              </div>
+              <p class="text-slate-400 text-[11px] leading-relaxed">
+                1. Open Discord Channel Settings &rarr; Integrations.<br>
+                2. Click <b>Webhooks &rarr; New Webhook</b>.<br>
+                3. Copy Webhook URL and paste into Token.
+              </p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5">
+              <div class="font-semibold text-blue-400 flex items-center gap-1.5">
+                <i data-lucide="cloud" class="w-3.5 h-3.5"></i> Bluesky (AT Protocol)
+              </div>
+              <p class="text-slate-400 text-[11px] leading-relaxed">
+                1. In Bluesky, go to <b>Settings &rarr; App Passwords</b>.<br>
+                2. Click <b>Add App Password</b>.<br>
+                3. Paste password into Token and your handle into Username.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. AI SOCIAL MEDIA MANAGER CHAT -->
+    <section id="view-chat" class="hidden space-y-6">
+      <div class="glass p-6 rounded-2xl flex flex-col h-[700px]">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-indigo-600 flex items-center justify-center">
+              <i data-lucide="bot" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+              <h2 class="text-base font-semibold">Social Media Manager Copilot</h2>
+              <p class="text-xs text-emerald-400 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> RuFlo Memory & Agent-Reach Connected
+              </p>
+            </div>
+          </div>
+          <!-- Quick action chips -->
+          <div class="hidden sm:flex items-center gap-2">
+            <button onclick="sendQuickPrompt('Generate a 3-part Twitter thread on our latest video clip with a viral hook.')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300">
+              🧵 Draft Thread
+            </button>
+            <button onclick="sendQuickPrompt('Write a professional LinkedIn post about automated video workflows.')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300">
+              💼 LinkedIn Post
+            </button>
+            <button onclick="sendQuickPrompt('What are top trending video topics right now using Agent-Reach?')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300">
+              🔥 Trend Scout
+            </button>
+          </div>
+        </div>
+
+        <!-- Chat Messages Container -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto py-4 space-y-4">
+          <div class="flex gap-3">
+            <div class="w-8 h-8 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center shrink-0">
+              <i data-lucide="bot" class="w-4 h-4"></i>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl text-xs text-slate-200 leading-relaxed max-w-xl">
+              Hello! I am your AI Social Media Manager running locally on your laptop. I can draft viral hooks, adapt copy across X, LinkedIn, Telegram, and Discord, pull clips from your Content Rewards projects, and schedule your posts automatically. What are we posting today?
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input Bar -->
+        <div class="pt-3 border-t border-slate-800 flex items-center gap-3">
+          <input type="text" id="chat-input" onkeydown="if(event.key === 'Enter') sendChatMessage()" placeholder="Ask your Social Media Manager to draft, schedule, or plan..." class="flex-1 bg-dark-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
+          <button onclick="sendChatMessage()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i> Send
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. CONTENT REWARDS CLIPS & MEDIA -->
+    <section id="view-clips" class="hidden space-y-6">
+      <div class="glass p-6 rounded-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-lg font-semibold flex items-center gap-2">
+              <i data-lucide="film" class="w-5 h-5 text-emerald-400"></i> Content Rewards Video Clips
+            </h2>
+            <p class="text-xs text-slate-400">Locally generated vertical shorts, kinetic subtitle videos, and exported clips ready to share.</p>
+          </div>
+          <button onclick="loadClips()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 flex items-center gap-1.5">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Scan Workspace
+          </button>
+        </div>
+
+        <div id="clips-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal: AI Generator -->
+  <div id="ai-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass p-6 rounded-2xl max-w-lg w-full space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-semibold text-base flex items-center gap-2">
+          <i data-lucide="wand-2" class="w-4 h-4 text-emerald-400"></i> AI Campaign Generator
+        </h3>
+        <button onclick="closeAiGeneratorModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Topic or Video Summary</label>
+        <textarea id="ai-topic" rows="3" placeholder="e.g. 5 lessons from building an AI coding agent with RuFlo swarm architecture" class="w-full bg-dark-900 border border-slate-700 rounded-xl p-3 text-xs text-slate-200 focus:outline-none"></textarea>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Tone</label>
+        <select id="ai-tone" class="w-full bg-dark-900 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none">
+          <option value="viral_curiosity">Viral Curiosity (Punchy hooks, high engagement)</option>
+          <option value="thought_leader">Thought Leader (Analytical, deep insights)</option>
+          <option value="casual_creator">Casual & Direct (Builder vibes)</option>
+        </select>
+      </div>
+      <button onclick="runAiGenerate()" id="btn-run-ai" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs transition flex items-center justify-center gap-2">
+        <i data-lucide="sparkles" class="w-4 h-4"></i> Generate Campaign Drafts
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal: Add Social Account -->
+  <div id="account-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass p-6 rounded-2xl max-w-md w-full space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-semibold text-base flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-400"></i> Add Social Channel
+        </h3>
+        <button onclick="closeAddAccountModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Platform</label>
+        <select id="acc-provider" onchange="handleAccountProviderChange()" class="w-full bg-dark-900 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none">
+          <option value="x">Twitter / X</option>
+          <option value="telegram">Telegram (Bot / Channel)</option>
+          <option value="discord">Discord (Webhook)</option>
+          <option value="bluesky">Bluesky (AT Protocol)</option>
+          <option value="linkedin">LinkedIn</option>
+          <option value="reddit">Reddit</option>
+          <option value="youtube">YouTube</option>
+          <option value="instagram">Instagram (Reels & Feed)</option>
+          <option value="webhook">Generic Webhook (Zapier/n8n)</option>
+          <option value="mock">Simulation (Mock Mode)</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Account Label</label>
+        <input type="text" id="acc-name" placeholder="e.g. My Personal X Account" class="w-full bg-dark-900 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1" id="acc-user-label">Username / Handle</label>
+        <input type="text" id="acc-username" placeholder="@yourhandle" class="w-full bg-dark-900 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1" id="acc-token-label">API Access Token / Key</label>
+        <input type="password" id="acc-token" placeholder="Bearer Token or API Key" class="w-full bg-dark-900 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none">
+      </div>
+      <div id="acc-secret-container">
+        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1" id="acc-secret-label">Token Secret / Webhook URL / Chat ID</label>
+        <input type="text" id="acc-secret" placeholder="Optional or Channel Chat ID" class="w-full bg-dark-900 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none">
+      </div>
+      <button onclick="saveAccount()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs transition flex items-center justify-center gap-2">
+        <i data-lucide="check" class="w-4 h-4"></i> Save Account to Vault
+      </button>
+    </div>
+  </div>
+
+  <!-- JavaScript Client Logic -->
+  <script>
+    // Tab switching
+    function switchTab(tabId) {
+      document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-slate-800', 'text-white', 'shadow-sm');
+        btn.classList.add('text-slate-400');
+      });
+
+      const target = document.getElementById('view-' + tabId);
+      const targetBtn = document.getElementById('tab-' + tabId);
+      if (target) target.classList.remove('hidden');
+      if (targetBtn) {
+        targetBtn.classList.add('bg-slate-800', 'text-white', 'shadow-sm');
+        targetBtn.classList.remove('text-slate-400');
+      }
+
+      if (tabId === 'dashboard') loadStats();
+      if (tabId === 'queue') loadPosts();
+      if (tabId === 'accounts') loadAccounts();
+      if (tabId === 'clips') loadClips();
+      lucide.createIcons();
+    }
+
+    // Load initial stats & recent posts
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        document.getElementById('stat-total').innerText = data.total_posts || 0;
+        document.getElementById('stat-scheduled').innerText = data.scheduled || 0;
+        document.getElementById('stat-published').innerText = data.published || 0;
+        document.getElementById('stat-accounts').innerText = data.accounts || 0;
+
+        const postsRes = await fetch('/api/posts');
+        const posts = await postsRes.json();
+        renderRecentPosts(posts.slice(0, 5));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderRecentPosts(posts) {
+      const el = document.getElementById('recent-posts-list');
+      if (!posts || posts.length === 0) {
+        el.innerHTML = '<div class="py-6 text-center text-slate-500 text-xs">No posts yet. Head to Composer to create your first post!</div>';
+        return;
+      }
+      el.innerHTML = posts.map(p => {
+        const statusBadge = p.status === 'PUBLISHED' 
+          ? '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">PUBLISHED</span>'
+          : p.status === 'SCHEDULED'
+          ? '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">SCHEDULED</span>'
+          : '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-400">DRAFT</span>';
+
+        return `
+          <div class="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between">
+            <div class="flex-1 mr-4">
+              <div class="text-xs font-medium text-slate-200 line-clamp-1">${escapeHtml(p.content)}</div>
+              <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-2">
+                <span>Targets: ${p.target_platforms.join(', ')}</span>
+                <span>·</span>
+                <span>${p.scheduled_at ? new Date(p.scheduled_at).toLocaleString() : 'Instant'}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              ${statusBadge}
+              ${p.status === 'SCHEDULED' ? `<button onclick="publishPostNow(${p.id})" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300">Publish Now</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    // Composer functions
+    function handleContentInput() {
+      const content = document.getElementById('post-content').value;
+      const count = content.length;
+      document.getElementById('char-counter').innerText = `${count} chars`;
+      document.getElementById('preview-text').innerText = content || 'Type your message in the composer to see how it renders across channels...';
+
+      const mediaPath = document.getElementById('post-media-path').value;
+      const mediaBox = document.getElementById('preview-media-box');
+      if (mediaPath) {
+        mediaBox.classList.remove('hidden');
+        document.getElementById('preview-media-label').innerText = mediaPath.split('\\').pop().split('/').pop();
+      } else {
+        mediaBox.classList.add('hidden');
+      }
+    }
+
+    function updatePlatformSelection() {
+      const selected = Array.from(document.querySelectorAll('#platform-selectors input:checked')).map(i => i.value);
+      if (selected.length > 0) {
+        document.getElementById('preview-platform-label').innerText = selected[0].toUpperCase();
+      }
+    }
+
+    function toggleScheduleInput() {
+      const immediately = document.getElementById('post-immediately').checked;
+      document.getElementById('schedule-datetime-container').style.opacity = immediately ? '0.4' : '1.0';
+      document.getElementById('post-schedule-dt').disabled = immediately;
+    }
+
+    async function submitPost(publishNowFlag) {
+      const content = document.getElementById('post-content').value.trim();
+      if (!content) {
+        alert('Please write post content first.');
+        return;
+      }
+
+      const platforms = Array.from(document.querySelectorAll('#platform-selectors input:checked')).map(i => i.value);
+      if (platforms.length === 0) {
+        alert('Please select at least one target platform.');
+        return;
+      }
+
+      const mediaPath = document.getElementById('post-media-path').value.trim();
+      const scheduledDt = document.getElementById('post-schedule-dt').value;
+      const postImmediately = publishNowFlag || document.getElementById('post-immediately').checked;
+
+      const payload = {
+        content: content,
+        target_platforms: platforms,
+        media_paths: mediaPath ? [mediaPath] : [],
+        scheduled_at: scheduledDt || null,
+        publish_now: postImmediately
+      };
+
+      try {
+        const res = await fetch('/api/posts', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const post = await res.json();
+        alert(`Success! Post #${post.id} is now ${post.status}.`);
+        document.getElementById('post-content').value = '';
+        document.getElementById('post-media-path').value = '';
+        switchTab('queue');
+      } catch (e) {
+        alert('Error creating post: ' + e);
+      }
+    }
+
+    // Schedule Queue Loader
+    async function loadPosts() {
+      try {
+        const res = await fetch('/api/posts');
+        const posts = await res.json();
+        const tbody = document.getElementById('posts-table-body');
+        if (posts.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-500">No scheduled posts found.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = posts.map(p => {
+          const statusColor = p.status === 'PUBLISHED' ? 'text-emerald-400 bg-emerald-500/10' : p.status === 'SCHEDULED' ? 'text-blue-400 bg-blue-500/10' : 'text-slate-400 bg-slate-800';
+          return `
+            <tr class="hover:bg-slate-900/40 transition">
+              <td class="py-3 px-4 max-w-sm truncate text-slate-200">${escapeHtml(p.content)}</td>
+              <td class="py-3 px-4 font-mono text-[11px] text-slate-300">${p.target_platforms.join(', ')}</td>
+              <td class="py-3 px-4 text-slate-400">${p.scheduled_at ? new Date(p.scheduled_at).toLocaleString() : 'Immediate'}</td>
+              <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-semibold ${statusColor}">${p.status}</span></td>
+              <td class="py-3 px-4 text-right space-x-2">
+                ${p.status === 'SCHEDULED' ? `<button onclick="publishPostNow(${p.id})" class="text-xs text-emerald-400 hover:underline">Publish Now</button>` : ''}
+                <button onclick="deletePost(${p.id})" class="text-xs text-red-400 hover:underline">Delete</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function publishPostNow(id) {
+      if (!confirm('Publish post #' + id + ' now?')) return;
+      try {
+        await fetch(`/api/posts/${id}/publish-now`, { method: 'POST' });
+        loadPosts();
+        loadStats();
+      } catch (e) {
+        alert('Publish error: ' + e);
+      }
+    }
+
+    async function deletePost(id) {
+      if (!confirm('Delete post #' + id + '?')) return;
+      try {
+        await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+        loadPosts();
+        loadStats();
+      } catch (e) {
+        alert('Delete error: ' + e);
+      }
+    }
+
+    // Accounts Vault Loader
+    async function loadAccounts() {
+      try {
+        const res = await fetch('/api/accounts');
+        const accounts = await res.json();
+        const grid = document.getElementById('accounts-grid');
+        window.accountsCache = accounts;
+        grid.innerHTML = accounts.map(a => `
+          <div class="glass-card p-4 rounded-xl border border-slate-800 flex flex-col justify-between space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center font-bold text-xs uppercase text-slate-300">
+                  ${a.provider.slice(0, 2)}
+                </div>
+                <div>
+                  <h4 class="text-xs font-semibold text-slate-200">${escapeHtml(a.name)}</h4>
+                  <p class="text-[11px] text-slate-400">${a.username || '@configured'}</p>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${a.has_token ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
+                ${a.has_token ? 'Live Connected' : 'Simulation'}
+              </span>
+            </div>
+            <div class="flex items-center justify-between pt-2 border-t border-slate-800/80">
+              <div class="flex items-center gap-2">
+                <button onclick="testAccount(${a.id})" class="text-[11px] text-emerald-400 hover:underline flex items-center gap-1">
+                  <i data-lucide="zap" class="w-3 h-3"></i> Test
+                </button>
+                <span class="text-slate-600">·</span>
+                <button onclick="openEditAccountModal(${a.id})" class="text-[11px] text-indigo-400 hover:underline flex items-center gap-1">
+                  <i data-lucide="settings" class="w-3 h-3"></i> Configure
+                </button>
+              </div>
+              <button onclick="deleteAccount(${a.id})" class="text-[11px] text-red-400 hover:underline">
+                Remove
+              </button>
+            </div>
+          </div>
+        `).join('');
+        lucide.createIcons();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function testAccount(id) {
+      try {
+        const res = await fetch(`/api/accounts/${id}/test`, { method: 'POST' });
+        const data = await res.json();
+        if (data.mode === 'simulation' || data.success) {
+          alert((data.mode === 'simulation' ? '🧪 ' : '🟢 ') + (data.message || 'Connection verified!'));
+        } else {
+          alert('❌ Channel test failed: ' + (data.error || 'Check credentials.'));
+        }
+      } catch (e) {
+        alert('Test error: ' + e);
+      }
+    }
+
+    async function deleteAccount(id) {
+      if (!confirm('Remove account #' + id + '?')) return;
+      await fetch(`/api/accounts/${id}`, { method: 'DELETE' });
+      loadAccounts();
+      loadStats();
+    }
+
+    let editingAccountId = null;
+
+    function openAddAccountModal() {
+      editingAccountId = null;
+      document.getElementById('acc-name').value = '';
+      document.getElementById('acc-username').value = '';
+      document.getElementById('acc-token').value = '';
+      document.getElementById('acc-secret').value = '';
+      document.getElementById('account-modal').classList.remove('hidden');
+    }
+
+    function openEditAccountModal(id) {
+      editingAccountId = id;
+      const acc = (window.accountsCache || []).find(a => a.id === id);
+      if (!acc) return;
+
+      document.getElementById('acc-provider').value = acc.provider;
+      handleAccountProviderChange();
+      document.getElementById('acc-name').value = acc.name || '';
+      document.getElementById('acc-username').value = acc.username || '';
+      document.getElementById('acc-token').value = '';
+      let extra = {};
+      try { extra = JSON.parse(acc.additional_settings || '{}'); } catch(e){}
+      document.getElementById('acc-secret').value = extra.chat_id || '';
+      document.getElementById('account-modal').classList.remove('hidden');
+    }
+
+    function closeAddAccountModal() {
+      document.getElementById('account-modal').classList.add('hidden');
+    }
+
+    function handleAccountProviderChange() {
+      const p = document.getElementById('acc-provider').value;
+      if (p === 'telegram') {
+        document.getElementById('acc-token-label').innerText = 'Telegram Bot Token';
+        document.getElementById('acc-secret-label').innerText = 'Chat ID / Channel @handle';
+        document.getElementById('acc-secret').placeholder = '@yourchannel or -100...';
+      } else if (p === 'discord') {
+        document.getElementById('acc-token-label').innerText = 'Discord Webhook URL';
+        document.getElementById('acc-secret-label').innerText = 'Optional Notes';
+      } else if (p === 'bluesky') {
+        document.getElementById('acc-token-label').innerText = 'App Password';
+        document.getElementById('acc-user-label').innerText = 'Handle (e.g. user.bsky.social)';
+      } else if (p === 'instagram') {
+        document.getElementById('acc-token-label').innerText = 'Meta Graph Access Token';
+        document.getElementById('acc-user-label').innerText = 'Username / Page Name';
+        document.getElementById('acc-secret-label').innerText = 'Instagram Business ID (ig_user_id)';
+        document.getElementById('acc-secret').placeholder = 'e.g. 1784140...';
+      } else {
+        document.getElementById('acc-token-label').innerText = 'API Access Token / Bearer Key';
+        document.getElementById('acc-secret-label').innerText = 'Token Secret / Webhook URL';
+      }
+    }
+
+    async function saveAccount() {
+      const provider = document.getElementById('acc-provider').value;
+      const name = document.getElementById('acc-name').value.trim();
+      const username = document.getElementById('acc-username').value.trim();
+      const token = document.getElementById('acc-token').value.trim();
+      const secret = document.getElementById('acc-secret').value.trim();
+
+      if (!name) { alert('Account label required'); return; }
+
+      let extra = {};
+      if (provider === 'telegram' && secret) extra.chat_id = secret;
+      if (provider === 'instagram' && secret) extra.ig_user_id = secret;
+
+      const payload = {
+        provider, name, username, token, token_secret: secret, additional_settings: extra
+      };
+
+      if (editingAccountId) {
+        await fetch(`/api/accounts/${editingAccountId}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+      } else {
+        await fetch('/api/accounts', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+      }
+
+      closeAddAccountModal();
+      loadAccounts();
+      loadStats();
+    }
+
+    // Content Rewards Clips Loader
+    async function loadClips() {
+      try {
+        const res = await fetch('/api/clips');
+        const data = await res.json();
+        const grid = document.getElementById('clips-grid');
+        if (!data.clips || data.clips.length === 0) {
+          grid.innerHTML = '<div class="col-span-3 py-8 text-center text-slate-500 text-xs">No video clips found in projects/ directory yet. Run a Content Rewards clipping pipeline to produce clips!</div>';
+          return;
+        }
+
+        grid.innerHTML = data.clips.map(c => `
+          <div class="glass-card p-4 rounded-xl border border-slate-800 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400">${c.category}</span>
+              <span class="text-[11px] text-slate-500">${c.size_mb} MB</span>
+            </div>
+            <div>
+              <h4 class="text-xs font-semibold text-slate-200 truncate">${c.filename}</h4>
+              <p class="text-[11px] text-slate-400">Project: ${c.project}</p>
+            </div>
+            <button onclick="selectClipForPost('${c.path.replace(/\\/g, '\\\\')}')" class="w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-xs font-medium transition flex items-center justify-center gap-1.5">
+              <i data-lucide="share-2" class="w-3.5 h-3.5"></i> Use in Post Composer
+            </button>
+          </div>
+        `).join('');
+        lucide.createIcons();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function selectClipForPost(path) {
+      document.getElementById('post-media-path').value = path;
+      handleContentInput();
+      switchTab('composer');
+    }
+
+    // AI Generator Modal
+    function openAiGeneratorModal() {
+      document.getElementById('ai-modal').classList.remove('hidden');
+    }
+    function closeAiGeneratorModal() {
+      document.getElementById('ai-modal').classList.add('hidden');
+    }
+
+    async function runAiGenerate() {
+      const topic = document.getElementById('ai-topic').value.trim();
+      const tone = document.getElementById('ai-tone').value;
+      if (!topic) { alert('Please enter a topic'); return; }
+
+      const platforms = Array.from(document.querySelectorAll('#platform-selectors input:checked')).map(i => i.value);
+      const btn = document.getElementById('btn-run-ai');
+      btn.innerText = 'Generating with RuFlo...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ topic, platforms, tone })
+        });
+        const data = await res.json();
+        if (data.posts && data.posts.x) {
+          document.getElementById('post-content').value = data.posts.x.content;
+          handleContentInput();
+        }
+        closeAiGeneratorModal();
+      } catch (e) {
+        alert('Generation error: ' + e);
+      } finally {
+        btn.innerHTML = '<i data-lucide="sparkles" class="w-4 h-4"></i> Generate Campaign Drafts';
+        btn.disabled = false;
+        lucide.createIcons();
+      }
+    }
+
+    // AI Chat
+    async function sendChatMessage() {
+      const input = document.getElementById('chat-input');
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      input.value = '';
+      appendChatMessage('user', msg);
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ message: msg })
+        });
+        const data = await res.json();
+        appendChatMessage('assistant', data.reply);
+      } catch (e) {
+        appendChatMessage('assistant', 'Chat error: ' + e);
+      }
+    }
+
+    function sendQuickPrompt(prompt) {
+      document.getElementById('chat-input').value = prompt;
+      sendChatMessage();
+    }
+
+    function appendChatMessage(role, content) {
+      const box = document.getElementById('chat-messages');
+      const isUser = role === 'user';
+      const div = document.createElement('div');
+      div.className = `flex gap-3 ${isUser ? 'justify-end' : ''}`;
+      div.innerHTML = `
+        ${!isUser ? `<div class="w-8 h-8 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center shrink-0"><i data-lucide="bot" class="w-4 h-4"></i></div>` : ''}
+        <div class="${isUser ? 'bg-emerald-600 text-white' : 'bg-slate-900 border border-slate-800 text-slate-200'} p-3.5 rounded-2xl text-xs leading-relaxed max-w-xl whitespace-pre-wrap">
+          ${escapeHtml(content)}
+        </div>
+      `;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+      lucide.createIcons();
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      loadStats();
+      // Set default schedule time to +1 hour
+      const d = new Date(Date.now() + 3600000);
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      document.getElementById('post-schedule-dt').value = d.toISOString().slice(0, 16);
+    });
+  </script>
+</body>
+</html>
+
