@@ -121,10 +121,18 @@ class CampaignGenerateRequest(BaseModel):
     tone: Optional[str] = "engaging"
     video_clip_path: Optional[str] = None
     youtube_source_url: Optional[str] = None
+    api_key: Optional[str] = None
+    provider: Optional[str] = "groq"
+    model: Optional[str] = None
+    base_url: Optional[str] = None
 
 
 class ChatRequest(BaseModel):
     message: str
+    api_key: Optional[str] = None
+    provider: Optional[str] = "groq"
+    model: Optional[str] = None
+    base_url: Optional[str] = None
 
 
 # ----------------- Web UI Route -----------------
@@ -276,13 +284,23 @@ async def generate_campaign(req: CampaignGenerateRequest):
         platforms=req.platforms,
         tone=req.tone,
         video_clip_path=req.video_clip_path,
-        youtube_source_url=req.youtube_source_url
+        youtube_source_url=req.youtube_source_url,
+        api_key=req.api_key,
+        provider=req.provider,
+        model=req.model,
+        base_url=req.base_url
     )
 
 
 @app.post("/api/chat")
 async def chat_manager(req: ChatRequest):
-    reply = social_manager.handle_user_chat(req.message)
+    reply = social_manager.handle_user_chat(
+        user_message=req.message,
+        api_key=req.api_key,
+        provider=req.provider,
+        model=req.model,
+        base_url=req.base_url
+    )
     return {"reply": reply}
 
 

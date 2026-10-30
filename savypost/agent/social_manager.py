@@ -19,9 +19,6 @@ class SocialMediaManager:
 
     def __init__(self):
         self.scout = TrendScout()
-        self.llm_base_url = os.getenv("LLM_BASE_URL", "http://localhost:11434/v1").rstrip("/")
-        self.llm_model = os.getenv("LLM_MODEL", "gpt-4o-mini")
-        self.llm_api_key = os.getenv("LLM_API_KEY", "")
 
     def store_memory(self, key: str, value: Any, tags: Optional[List[str]] = None) -> bool:
         """Persist viral hooks, campaign learnings, and audit trails in vector memory."""
@@ -53,7 +50,11 @@ class SocialMediaManager:
         platforms: List[str] = None,
         tone: str = "engaging",
         video_clip_path: Optional[str] = None,
-        youtube_source_url: Optional[str] = None
+        youtube_source_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        provider: Optional[str] = "groq",
+        model: Optional[str] = None,
+        base_url: Optional[str] = None
     ) -> Dict[str, Any]:
         """Generate tailored posts across multiple platforms with high-retention hooks."""
         platforms = platforms or ["x", "instagram", "linkedin", "telegram", "bluesky"]
@@ -88,7 +89,10 @@ class SocialMediaManager:
             "Generate optimized copy for each platform."
         )
 
-        parsed = self._generate_with_llm(system_prompt, user_prompt, topic, platforms)
+        parsed = self._generate_with_llm(
+            system_prompt, user_prompt, topic, platforms,
+            api_key=api_key, provider=provider, model=model, base_url=base_url
+        )
 
         output_posts = {}
         for plat in platforms:
@@ -156,7 +160,14 @@ class SocialMediaManager:
         logger.info(f"[SavyPost] Scheduled post #{post_dict['id']} for {scheduled_time.isoformat()}")
         return post_dict
 
-    def handle_user_chat(self, user_message: str) -> str:
+    def handle_user_chat(
+        self,
+        user_message: str,
+        api_key: Optional[str] = None,
+        provider: Optional[str] = "groq",
+        model: Optional[str] = None,
+        base_url: Optional[str] = None
+    ) -> str:
         """Interactive conversational interface for SavyPost Social Media Manager."""
         with get_db() as db:
             db.add(AgentMessage(role="user", content=user_message))
@@ -166,13 +177,16 @@ class SocialMediaManager:
             history_text = "\n".join([f"{m.role.capitalize()}: {m.content}" for m in reversed(recent_history)])
 
         system_prompt = (
-            "You are SavyPost, an autonomous AI Social Media Manager running locally on the user's laptop. "
-            "You help creators, founders, and developers plan, draft, and schedule cross-platform campaigns "
+            "You are SavyPost, an elite AI Social Media Manager running locally on the user's laptop. "
+            "You help creators, founders, and developers plan, draft, optimize viral hooks, and schedule cross-platform campaigns "
             "across Instagram, X, LinkedIn, Telegram, Discord, Bluesky, Reddit, and YouTube. "
-            "Provide high-retention hooks, actionable feedback, and ready-to-publish drafts."
+            "Be creative, direct, concise, and provide ready-to-copy social media posts with strategic hooks."
         )
 
-        reply = self._chat_with_llm(system_prompt, history_text, user_message)
+        reply = self._chat_with_llm(
+            system_prompt, history_text, user_message,
+            api_key=api_key, provider=provider, model=model, base_url=base_url
+        )
 
         with get_db() as db:
             db.add(AgentMessage(role="assistant", content=reply))
@@ -180,58 +194,120 @@ class SocialMediaManager:
 
         return reply
 
-    def _generate_with_llm(self, system_prompt: str, user_prompt: str, topic: str, platforms: List[str]) -> Dict[str, Any]:
-        """Query LLM endpoint or return intelligent heuristic fallback."""
-        try:
-            endpoint = f"{self.llm_base_url}/chat/completions"
-            headers = {"Content-Type": "application/json"}
-            if self.llm_api_key:
-                headers["Authorization"] = f"Bearer {self.llm_api_key}"
+    def _resolve_llm_config(
+        self,
+        api_key: Optional[str],
+        provider: Optional[str],
+        model: Optional[str],
+        base_url: Optional[str]
+    ):
+        """Determine endpoint URL, key, and model according to chosen provider."""
+        provider = (provider or "groq").lower()
+        key = api_key or os.getenv("LLM_API_KEY", "")
 
-            payload = {
-                "model": self.llm_model,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                "response_format": {"type": "json_object"},
-                "temperature": 0.7
-            }
-            res = requests.post(endpoint, headers=headers, json=payload, timeout=20)
-            if res.status_code == 200:
-                content = res.json()["choices"][0]["message"]["content"]
-                return json.loads(content)
-        except Exception:
-            pass
+        if provider == "openai":
+            url = base_url or "https://api.openai.com/v1"
+            m = model or "gpt-4o-mini"
+        elif provider == "groq":
+            url = base_url or "https://api.groq.com/openai/v1"
+            m = model or "llama-3.3-70b-versatile"
+        elif provider == "anthropic":
+            url = base_url or "https://api.anthropic.com/v1"
+            m = model or "claude-3-5-haiku-latest"
+        elif provider == "gemini":
+            url = base_url or "https://generativelanguage.googleapis.com/v1beta/openai"
+            m = model or "gemini-2.0-flash"
+        elif provider == "openrouter":
+            url = base_url or "https://openrouter.ai/api/v1"
+            m = model or "meta-llama/llama-3.3-70b-instruct"
+        elif provider == "ollama":
+            url = base_url or "http://localhost:11434/v1"
+            m = model or "llama3.2:latest"
+        else:
+            url = base_url or os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
+            m = model or os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
+
+        return url.rstrip("/"), key, m
+
+    def _generate_with_llm(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        topic: str,
+        platforms: List[str],
+        api_key: Optional[str] = None,
+        provider: Optional[str] = None,
+        model: Optional[str] = None,
+        base_url: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Query LLM endpoint or return intelligent heuristic fallback."""
+        url, key, m = self._resolve_llm_config(api_key, provider, model, base_url)
+
+        if key or "localhost" in url or "127.0.0.1" in url:
+            try:
+                endpoint = f"{url}/chat/completions"
+                headers = {"Content-Type": "application/json"}
+                if key:
+                    headers["Authorization"] = f"Bearer {key}"
+
+                payload = {
+                    "model": m,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    "response_format": {"type": "json_object"},
+                    "temperature": 0.7
+                }
+                res = requests.post(endpoint, headers=headers, json=payload, timeout=25)
+                if res.status_code == 200:
+                    content = res.json()["choices"][0]["message"]["content"]
+                    return json.loads(content)
+            except Exception as e:
+                logger.warning(f"LLM generation call failed ({e}), falling back to heuristic templates.")
 
         return self._fallback_generation(topic, platforms)
 
-    def _chat_with_llm(self, system_prompt: str, history: str, user_message: str) -> str:
-        """Generate response for user chat."""
-        try:
-            endpoint = f"{self.llm_base_url}/chat/completions"
-            headers = {"Content-Type": "application/json"}
-            if self.llm_api_key:
-                headers["Authorization"] = f"Bearer {self.llm_api_key}"
+    def _chat_with_llm(
+        self,
+        system_prompt: str,
+        history: str,
+        user_message: str,
+        api_key: Optional[str] = None,
+        provider: Optional[str] = None,
+        model: Optional[str] = None,
+        base_url: Optional[str] = None
+    ) -> str:
+        """Generate response for user chat using configured provider API key."""
+        url, key, m = self._resolve_llm_config(api_key, provider, model, base_url)
 
-            payload = {
-                "model": self.llm_model,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Context:\n{history}\n\nUser: {user_message}"}
-                ],
-                "temperature": 0.7
-            }
-            res = requests.post(endpoint, headers=headers, json=payload, timeout=20)
-            if res.status_code == 200:
-                return res.json()["choices"][0]["message"]["content"]
-        except Exception:
-            pass
+        if key or "localhost" in url or "127.0.0.1" in url:
+            try:
+                endpoint = f"{url}/chat/completions"
+                headers = {"Content-Type": "application/json"}
+                if key:
+                    headers["Authorization"] = f"Bearer {key}"
+
+                payload = {
+                    "model": m,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": f"Context:\n{history}\n\nUser: {user_message}"}
+                    ],
+                    "temperature": 0.7
+                }
+                res = requests.post(endpoint, headers=headers, json=payload, timeout=30)
+                if res.status_code == 200:
+                    data = res.json()
+                    return data["choices"][0]["message"]["content"]
+                else:
+                    return f"API returned error ({res.status_code}): {res.text[:250]}"
+            except Exception as e:
+                return f"Connection error to {provider or 'LLM'}: {str(e)}. Please check your API key or endpoint."
 
         return (
-            f"I have reviewed your request: '{user_message}'. "
-            "I am ready to help you plan, optimize hooks, or schedule posts across your connected channels. "
-            "Head over to the Composer & Studio tab to create a post, or configure your channels in the Accounts & Vault tab!"
+            f"💡 **AI Key Configuration**: You can chat using any AI provider! "
+            "Please paste your API key (Groq, OpenAI, Gemini, OpenRouter, or Ollama) in the **AI Provider & Key** bar above, and I will generate live viral hooks, plan your weekly content calendar, and adapt posts across your channels."
         )
 
     def _fallback_generation(self, topic: str, platforms: List[str]) -> Dict[str, Any]:

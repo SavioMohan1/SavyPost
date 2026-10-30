@@ -487,6 +487,30 @@
           </div>
         </div>
 
+        <!-- AI API Key & Provider Configuration Bar -->
+        <div class="py-2.5 px-3.5 my-2 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-wrap items-center gap-2.5 text-xs">
+          <div class="flex items-center gap-1.5 text-slate-400 font-medium shrink-0">
+            <i data-lucide="key" class="w-3.5 h-3.5 text-indigo-400"></i>
+            <span>AI Provider:</span>
+          </div>
+          <select id="chat-ai-provider" onchange="handleAiProviderChange()" class="bg-dark-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none">
+            <option value="groq">Groq (Ultra-Fast & Free Llama 3.3)</option>
+            <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
+            <option value="gemini">Google Gemini (Gemini 2.0 Flash)</option>
+            <option value="openrouter">OpenRouter (Any Model)</option>
+            <option value="ollama">Ollama Local (Localhost:11434)</option>
+          </select>
+          <div class="flex-1 min-w-[200px] flex items-center gap-2">
+            <input type="password" id="chat-ai-key" oninput="saveAiKeyToStorage()" placeholder="Paste your API key here (e.g. gsk_... or sk-...)" class="w-full bg-dark-950 border border-slate-700 rounded-lg px-3 py-1 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 placeholder-slate-600">
+            <button onclick="toggleKeyVisibility()" title="Toggle visibility" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs">
+              <i data-lucide="eye" id="eye-icon" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+          <span class="text-[11px] text-emerald-400 font-mono hidden sm:inline-block" id="key-saved-indicator">
+            Saved Locally
+          </span>
+        </div>
+
         <!-- Chat Messages Container -->
         <div id="chat-messages" class="flex-1 overflow-y-auto py-4 space-y-4">
           <div class="flex gap-3">
@@ -999,6 +1023,78 @@
       switchTab('composer');
     }
 
+    // AI Key & Provider Management
+    function saveAiKeyToStorage() {
+      const providerEl = document.getElementById('chat-ai-provider');
+      const keyEl = document.getElementById('chat-ai-key');
+      const indicator = document.getElementById('key-saved-indicator');
+      if (!providerEl || !keyEl) return;
+
+      const provider = providerEl.value;
+      const key = keyEl.value.trim();
+      localStorage.setItem('savypost_ai_provider', provider);
+      localStorage.setItem('savypost_ai_key_' + provider, key);
+      localStorage.setItem('savypost_ai_key', key);
+
+      if (indicator) {
+        if (key) {
+          indicator.textContent = 'Saved Locally';
+          indicator.className = 'text-[11px] text-emerald-400 font-mono hidden sm:inline-block';
+        } else {
+          indicator.textContent = 'Ready';
+          indicator.className = 'text-[11px] text-slate-500 font-mono hidden sm:inline-block';
+        }
+      }
+    }
+
+    function handleAiProviderChange() {
+      const providerEl = document.getElementById('chat-ai-provider');
+      const keyEl = document.getElementById('chat-ai-key');
+      if (!providerEl || !keyEl) return;
+
+      const provider = providerEl.value;
+      localStorage.setItem('savypost_ai_provider', provider);
+
+      if (provider === 'groq') {
+        keyEl.placeholder = 'Paste your Groq API key (gsk_...) - free & ultra-fast';
+      } else if (provider === 'gemini') {
+        keyEl.placeholder = 'Paste your Gemini API key (AIzaSy...)';
+      } else if (provider === 'openai') {
+        keyEl.placeholder = 'Paste your OpenAI API key (sk-...)';
+      } else if (provider === 'openrouter') {
+        keyEl.placeholder = 'Paste your OpenRouter API key (sk-or-...)';
+      } else if (provider === 'ollama') {
+        keyEl.placeholder = 'Optional for Ollama (defaults to http://localhost:11434)';
+      }
+
+      const savedKey = localStorage.getItem('savypost_ai_key_' + provider) || (provider === 'groq' ? (localStorage.getItem('savypost_ai_key') || '') : '');
+      keyEl.value = savedKey;
+      saveAiKeyToStorage();
+    }
+
+    function loadAiKeyFromStorage() {
+      const savedProvider = localStorage.getItem('savypost_ai_provider') || 'groq';
+      const providerEl = document.getElementById('chat-ai-provider');
+      if (providerEl) {
+        providerEl.value = savedProvider;
+      }
+      handleAiProviderChange();
+    }
+
+    function toggleKeyVisibility() {
+      const keyEl = document.getElementById('chat-ai-key');
+      const eyeIcon = document.getElementById('eye-icon');
+      if (!keyEl) return;
+      if (keyEl.type === 'password') {
+        keyEl.type = 'text';
+        if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        keyEl.type = 'password';
+        if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye');
+      }
+      lucide.createIcons();
+    }
+
     // AI Generator Modal
     function openAiGeneratorModal() {
       document.getElementById('ai-modal').classList.remove('hidden');
@@ -1012,16 +1108,27 @@
       const tone = document.getElementById('ai-tone').value;
       if (!topic) { alert('Please enter a topic'); return; }
 
+      const providerEl = document.getElementById('chat-ai-provider');
+      const keyEl = document.getElementById('chat-ai-key');
+      const provider = providerEl ? providerEl.value : 'groq';
+      const apiKey = keyEl ? keyEl.value.trim() : (localStorage.getItem('savypost_ai_key') || '');
+
       const platforms = Array.from(document.querySelectorAll('#platform-selectors input:checked')).map(i => i.value);
       const btn = document.getElementById('btn-run-ai');
-      btn.innerText = 'Generating with RuFlo...';
+      btn.innerText = 'Generating with SavyPost AI...';
       btn.disabled = true;
 
       try {
         const res = await fetch('/api/generate', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ topic, platforms, tone })
+          body: JSON.stringify({ 
+            topic, 
+            platforms, 
+            tone,
+            provider,
+            api_key: apiKey
+          })
         });
         const data = await res.json();
         if (data.posts && data.posts.x) {
@@ -1044,18 +1151,50 @@
       const msg = input.value.trim();
       if (!msg) return;
 
+      const providerEl = document.getElementById('chat-ai-provider');
+      const keyEl = document.getElementById('chat-ai-key');
+      const provider = providerEl ? providerEl.value : 'groq';
+      const apiKey = keyEl ? keyEl.value.trim() : (localStorage.getItem('savypost_ai_key') || '');
+
       input.value = '';
       appendChatMessage('user', msg);
+
+      // Thinking indicator
+      const thinkingId = 'thinking-' + Date.now();
+      const box = document.getElementById('chat-messages');
+      const thinkDiv = document.createElement('div');
+      thinkDiv.id = thinkingId;
+      thinkDiv.className = 'flex gap-3';
+      thinkDiv.innerHTML = `
+        <div class="w-8 h-8 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center shrink-0">
+          <i data-lucide="bot" class="w-4 h-4 animate-spin"></i>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 text-slate-400 p-3.5 rounded-2xl text-xs flex items-center gap-2">
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          Generating response...
+        </div>
+      `;
+      box.appendChild(thinkDiv);
+      box.scrollTop = box.scrollHeight;
+      lucide.createIcons();
 
       try {
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ message: msg })
+          body: JSON.stringify({ 
+            message: msg,
+            provider: provider,
+            api_key: apiKey
+          })
         });
         const data = await res.json();
-        appendChatMessage('assistant', data.reply);
+        const pendingEl = document.getElementById(thinkingId);
+        if (pendingEl) pendingEl.remove();
+        appendChatMessage('assistant', data.reply || data.error || 'No response generated.');
       } catch (e) {
+        const pendingEl = document.getElementById(thinkingId);
+        if (pendingEl) pendingEl.remove();
         appendChatMessage('assistant', 'Chat error: ' + e);
       }
     }
@@ -1089,6 +1228,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
       loadStats();
+      loadAiKeyFromStorage();
       // Set default schedule time to +1 hour
       const d = new Date(Date.now() + 3600000);
       d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
